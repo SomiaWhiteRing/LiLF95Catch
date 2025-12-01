@@ -1,0 +1,14 @@
+{
+  "base_url": "https://f95zone.to",
+  "thread_id": 48158,
+  "thread_url": "https://f95zone.to/threads/lessons-in-love-v0-53-0-selebus.48158",
+  "posts_per_shard": 1000,
+  "request_interval_seconds": 2.0,
+  "long_retry_interval_seconds": 600.0,
+  "concurrent_pages": 8,
+  "concurrent_downloads": 4,
+  "cookies": {
+    "raw_cookie_header": "xf_user=YOUR_USER_COOKIE_HERE; xf_session=YOUR_SESSION_COOKIE_HERE"
+  },
+  "user_agent": "LiLF95Catch/0.1 (+https://example.com/your-contact)"
+}
