@@ -4,7 +4,8 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$ApiToken,
   [string]$ProjectName = "lilf95catch",
-  [string]$Domain = "LiLcatch.shatranj.space"
+  [string]$Domain = "LiLcatch.shatranj.space",
+  [string]$ZoneId = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,9 +33,11 @@ try {
     if ($_.Exception.Response.StatusCode.value__ -ne 409) { throw }
   }
 
-  $zone = (Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1
-  if (-not $zone) { throw "Cloudflare zone shatranj.space not found" }
-  $recordsUri = "https://api.cloudflare.com/client/v4/zones/$($zone.id)/dns_records"
+  if (-not $ZoneId) {
+    $ZoneId = ((Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1).id
+  }
+  if (-not $ZoneId) { throw "Cloudflare zone shatranj.space not found" }
+  $recordsUri = "https://api.cloudflare.com/client/v4/zones/$ZoneId/dns_records"
   $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=$Domain&type=CNAME").result | Select-Object -First 1
   $dnsBody = @{
     type = "CNAME"

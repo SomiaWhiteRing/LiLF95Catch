@@ -217,12 +217,14 @@ npm run cf:build
 
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ZONE_ID`（可选，但推荐；填 `shatranj.space` 的 Zone ID，DNS 自动配置更稳）
 
 PowerShell 设置示例（需要先安装并登录 GitHub CLI）：
 
 ```powershell
 gh secret set CLOUDFLARE_ACCOUNT_ID -b "YOUR_ACCOUNT_ID"
 gh secret set CLOUDFLARE_API_TOKEN -b "YOUR_API_TOKEN"
+gh secret set CLOUDFLARE_ZONE_ID -b "YOUR_ZONE_ID"
 ```
 
 Cloudflare API Token 需要 `Pages:Edit`，如果要自动绑定 `LiLcatch.shatranj.space`，还需要 `DNS:Edit` 和 `Zone:Read`：
