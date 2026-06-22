@@ -162,9 +162,14 @@ select {
 
 .md-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
   margin-top: 16px;
+}
+
+.md-form-grid > *,
+.md-search-primary > * {
+  min-width: 0;
 }
 
 .md-text-field {
@@ -173,10 +178,13 @@ select {
   gap: 4px;
   color: var(--md-secondary);
   font-size: 12px;
+  min-width: 0;
 }
 
 .md-text-field input,
 .md-text-field select {
+  width: 100%;
+  min-width: 0;
   height: 44px;
   border: none;
   border-bottom: 1px solid var(--md-divider);
@@ -185,6 +193,15 @@ select {
   outline: none;
   color: var(--md-text);
   border-radius: 4px 4px 0 0;
+}
+
+.md-more-filters {
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+.md-secondary-filters {
+  margin-top: 8px;
 }
 
 .md-text-field input:focus,

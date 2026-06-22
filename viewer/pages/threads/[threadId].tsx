@@ -95,6 +95,7 @@ export default function ThreadPage() {
   const [installProgress, setInstallProgress] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [initializingCache, setInitializingCache] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   useEffect(() => {
     if (!router.isReady || paramsLoadedRef.current) return;
@@ -106,6 +107,7 @@ export default function ThreadPage() {
     setPageSize(nextPageSize);
     setPage(nextPage);
     setPageInput(String(nextPage));
+    setShowMoreFilters(hasSecondaryFilters(router.query));
     if (hasSearchParams(router.query)) {
       setAppliedFilters(nextFilters);
       setHasSearched(true);
@@ -337,14 +339,9 @@ export default function ThreadPage() {
           </div>
           <div className="md-form-grid">
             <TextField label={t.author} value={filters.author} onChange={(value) => setFilters((prev) => ({ ...prev, author: value }))} />
-            <TextField label={t.authorId} value={filters.authorId} onChange={(value) => setFilters((prev) => ({ ...prev, authorId: value }))} />
             <TextField label={t.minFloor} value={filters.minIndex} onChange={(value) => setFilters((prev) => ({ ...prev, minIndex: value }))} />
             <TextField label={t.maxFloor} value={filters.maxIndex} onChange={(value) => setFilters((prev) => ({ ...prev, maxIndex: value }))} />
             <TextField label={t.minLikes} value={filters.minLikes} onChange={(value) => setFilters((prev) => ({ ...prev, minLikes: value }))} />
-            <TextField label={t.pageSize} value={String(pageSize)} onChange={(value) => {
-              const next = parseInt(value, 10);
-              if (!Number.isNaN(next)) setPageSize(Math.min(200, Math.max(1, next)));
-            }} />
             <SelectField label={t.sort} value={filters.sort} onChange={(value) => setFilters((prev) => ({ ...prev, sort: value as SortMode }))} options={[
               ["floor_asc", t.sortFloorAsc],
               ["floor_desc", t.sortFloorDesc],
@@ -354,11 +351,23 @@ export default function ThreadPage() {
               ["length", t.sortLength],
               ["rank", t.sortRank],
             ]} />
+          </div>
+          <button className="md-button md-button-text md-more-filters" type="button" onClick={() => setShowMoreFilters((value) => !value)}>
+            {showMoreFilters ? t.lessFilters : t.moreFilters}
+          </button>
+          {showMoreFilters && (
+            <div className="md-form-grid md-secondary-filters">
+              <TextField label={t.authorId} value={filters.authorId} onChange={(value) => setFilters((prev) => ({ ...prev, authorId: value }))} />
+              <TextField label={t.pageSize} value={String(pageSize)} onChange={(value) => {
+                const next = parseInt(value, 10);
+                if (!Number.isNaN(next)) setPageSize(Math.min(200, Math.max(1, next)));
+              }} />
             <TextField type="date" label={t.fromDate} value={filters.fromDate} onChange={(value) => setFilters((prev) => ({ ...prev, fromDate: value }))} />
             <TextField type="date" label={t.toDate} value={filters.toDate} onChange={(value) => setFilters((prev) => ({ ...prev, toDate: value }))} />
             <TextField label={t.minChars} value={filters.minChars} onChange={(value) => setFilters((prev) => ({ ...prev, minChars: value }))} />
             <TextField label={t.maxChars} value={filters.maxChars} onChange={(value) => setFilters((prev) => ({ ...prev, maxChars: value }))} />
-          </div>
+            </div>
+          )}
 
           <div className="md-control-row">
             <div className="md-segmented" aria-label="view mode">
@@ -563,6 +572,11 @@ function queryFromState(threadId: string, filters: Filters, page: number, pageSi
 
 function hasSearchParams(query: Record<string, string | string[] | undefined>): boolean {
   return ["q", "author", "authorId", "minIndex", "maxIndex", "minLikes", "fromDate", "toDate", "minChars", "maxChars", "sort", "page", "pageSize"]
+    .some((key) => queryValue(query[key]).trim() !== "");
+}
+
+function hasSecondaryFilters(query: Record<string, string | string[] | undefined>): boolean {
+  return ["authorId", "fromDate", "toDate", "minChars", "maxChars", "pageSize"]
     .some((key) => queryValue(query[key]).trim() !== "");
 }
 
