@@ -64,3 +64,16 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           command: pages deploy viewer/out --project-name=lilf95catch --branch=master --commit-dirty=true
+
+      - name: Bind custom domain
+        shell: pwsh
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:CLOUDFLARE_API_TOKEN"; "Content-Type" = "application/json" }
+          $uri = "https://api.cloudflare.com/client/v4/accounts/$env:CLOUDFLARE_ACCOUNT_ID/pages/projects/lilf95catch/domains"
+          $domains = (Invoke-RestMethod -Headers $headers -Uri $uri).result
+          if (-not ($domains | Where-Object { $_.name -ieq "LiL.shatranj.space" })) {
+            Invoke-RestMethod -Method Post -Headers $headers -Uri $uri -Body (@{ name = "LiL.shatranj.space" } | ConvertTo-Json) | Out-Null
+          }
