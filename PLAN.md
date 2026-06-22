@@ -329,16 +329,25 @@
 
 ## 8. Next.js 查看器
 
-### 8.1 数据访问层（Node 侧）
+### 8.1 静态数据包访问层（浏览器侧）
 
-- Next.js 的 API Route 直接用 Node `fs` 读 `data/` 下的 JSON：
-  - `GET /api/threads/[threadId]/meta`
-  - `GET /api/threads/[threadId]/shards`
-  - `GET /api/threads/[threadId]/posts`：支持查询参数（作者、时间、楼层范围、likes 阈值、关键字等）
+- Viewer 是纯静态 Next.js 导出，不再依赖 API Route 或 Node `fs`：
+  - `python -m crawler.lilf95_crawler.cli build-static-viewer-data --out viewer/public/datasets`
+  - 读取入口：`/datasets/manifest.json`
+  - 版本化数据：`/datasets/{version}/threads/{threadId}/...`
 
-- 在 API 内部按需加载分片：
-  - 根据过滤条件与页码计算需要加载的分片集合，避免一次性加载整帖所有数据。
-  - 读取分片时，根据文件前缀选择 `schema_version` 最大的 JSON 文件。
+- 静态数据包结构：
+  - `posts-meta-*.json`：楼层、作者、时间、likes、正文长度、body chunk 路径。
+  - `bodies-*.json`：当前页展示需要的 HTML/text 正文、剧透和附件。
+  - `search/*.json`：按 token 前缀分桶的倒排索引，存 `post_id + frequency`。
+
+- 浏览器行为：
+  - 首屏加载 manifest、thread meta 和 post meta。
+  - 过滤和 token 全文搜索在 Web Worker 中执行。
+  - 当前页结果再按需加载 body chunk。
+  - 未安装当前版本缓存时，不允许检索或打开帖子。
+  - “Install data” 使用 Cache API 缓存所有 chunk，并用 IndexedDB 记录已安装版本。
+  - 数据更新时按 manifest 中的文件 hash 复用旧缓存中未变化的 chunk，只下载缺失或变化文件。
 
 ### 8.2 过滤与展示功能
 
@@ -347,12 +356,12 @@
   - 按时间范围（起止日期）。
   - 按楼层范围（from / to）。
   - 按点赞数阈值（≥ N）。
-  - 只看楼主 / 只看特定用户组（例如开发者）。
-  - 关键字 / 简单正则：在 `content_text_full` 中搜索。
+  - 关键字：基于预构建 token 倒排索引在 Web Worker 中搜索并按频次排序。
 
 - 排序：
   - 默认：按 `post_index` 升序。
-  - 可选：按 `likes_count` 降序、`created_at` 等。
+  - 有关键字时：按 token frequency rank 降序。
+  - UI 可切换楼层升/降、最新/最早、点赞、正文长度、相关度。
 
 - UI 形态：
   - 左侧过滤面板，右侧楼层列表。
@@ -365,9 +374,9 @@
 
 ### 8.3 图片与静态文件
 
-- Next.js 配置静态目录指向 `data/threads/{thread_id}/images`：
-  - 帖子 JSON 中的 `local_path` 映射为可访问的 URL。
-  - 楼层中渲染 `<img>` 时使用本地 URL，支持懒加载与预览。
+- Cloudflare 静态版暂不打包本地图片：
+  - 楼层中的 `<img>` 使用原始远程 URL 或 `data-src` 回退。
+  - 如需云端图片缓存，后续再加 R2；当前不引入 D1/Workers。
 
 - 附件链接：
   - 按原始 `remote_url` 渲染为外部链接，由浏览器直接访问 F95Zone。

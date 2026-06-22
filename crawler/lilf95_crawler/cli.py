@@ -19,6 +19,7 @@ from .storage import (
     load_thread_state,
     save_thread_state,
 )
+from .static_export import build_static_viewer_data
 from .users import update_users_from_posts, download_user_avatars
 
 
@@ -106,6 +107,23 @@ def main() -> None:
         help="Optional maximum number of pages to crawl in one run",
     )
 
+    build_static = subparsers.add_parser(
+        "build-static-viewer-data",
+        help="Build browser-cacheable static JSON data for the Next.js viewer.",
+    )
+    build_static.add_argument(
+        "--data-root",
+        type=Path,
+        default=Path("data"),
+        help="Path to source data directory (default: data)",
+    )
+    build_static.add_argument(
+        "--out",
+        type=Path,
+        default=Path("viewer/public/datasets"),
+        help="Output directory for static datasets (default: viewer/public/datasets)",
+    )
+
     args = parser.parse_args()
 
     # Configure logging: console + per-run logfile with timestamped filename.
@@ -150,6 +168,14 @@ def main() -> None:
             config_path=args.config,
             schema_version=args.schema_version,
             max_pages=args.max_pages,
+        )
+    elif args.command == "build-static-viewer-data":
+        manifest = build_static_viewer_data(data_root=args.data_root, out_dir=args.out)
+        logger.info(
+            "Built static viewer data version %s with %s posts at %s",
+            manifest["version"],
+            manifest["total_posts"],
+            args.out,
         )
     else:
         parser.error(f"Unknown command: {args.command}")

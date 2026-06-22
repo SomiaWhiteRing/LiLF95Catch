@@ -1,0 +1,5 @@
+/datasets/manifest.json
+  Cache-Control: no-cache
+
+/datasets/*
+  Cache-Control: public, max-age=31536000, immutable

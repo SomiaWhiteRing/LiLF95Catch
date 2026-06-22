@@ -3,7 +3,7 @@
 LiLF95Catch 是一个针对 F95Zone 论坛（当前主要测试目标为 Lessons in Love 讨论帖）的本地抓取与查看工具，包含：
 
 - Python 爬虫：抓取指定线程的每一楼正文与元数据，按楼层区间分片保存为 JSON。  
-- Next.js Viewer：从本地 JSON 分片加载数据，在浏览器中提供多种过滤与分页查看能力。
+- Next.js Viewer：把 JSON 分片预构建成静态数据包，浏览器本地过滤、分页和全文搜索。
 
 > 说明：当前实现已经包含完整的抓取、分片、增量更新与文本查看能力。图片本地缓存与用户信息 JSON 维护仍在规划中，后续可以按 PLAN.md 中的设计继续扩展。
 
@@ -19,7 +19,7 @@ LiLF95Catch 是一个针对 F95Zone 论坛（当前主要测试目标为 Lessons
   - `threads/{thread_id}/state.json`：增量抓取状态。  
   - `threads/{thread_id}/shards/*.json`：按楼层分片的帖子 JSON。  
 - `viewer/`  
-  - Next.js + TypeScript 项目，提供本地 Web 查看界面。  
+  - Next.js + TypeScript 静态项目，提供本地/Cloudflare Pages 查看界面。  
 - `PLAN.md`  
   - 更详细的设计文档与未来扩展计划。  
 - `AGENTS.md`  
@@ -167,9 +167,20 @@ python -m crawler.lilf95_crawler.cli parse-local f95_page_3030.html \
 
 ---
 
-## 启动 Next.js Viewer
+## 构建静态 Viewer 数据
 
-Viewer 会读取上述 `data/threads/{thread_id}` 中的数据，在浏览器中提供一个方便的阅读界面。
+Viewer 不再在运行时读取本机文件系统。先把 `data/` 下的 JSON 分片导出为浏览器可缓存的静态数据包：
+
+```bash
+python -m crawler.lilf95_crawler.cli build-static-viewer-data \
+  --out viewer/public/datasets
+```
+
+生成内容在 `viewer/public/datasets/`，每个 JSON chunk 控制在 20 MiB 以下。该目录是构建产物，默认不提交。
+
+---
+
+## 启动 Next.js Viewer
 
 1. 安装依赖（只需在首次使用时执行一次）：
 
@@ -189,13 +200,43 @@ Viewer 会读取上述 `data/threads/{thread_id}` 中的数据，在浏览器中
    - `http://localhost:3000/`：线程列表页面  
    - 如果已经抓到了 `thread_id = 48158` 的数据，你会看到类似 “Lessons in Love” 的条目，点击即可进入该线程的查看页。
 
+Cloudflare Pages 构建命令：
+
+```bash
+cd viewer
+npm run cf:build
+```
+
+输出目录：`viewer/out`。这条命令会先重建静态数据包，再执行 `next build`。
+
+### Cloudflare Pages 部署
+
+仓库已包含 GitHub Actions 工作流：`.github/workflows/deploy-cloudflare-pages.yml`。每次推送到 `master` 会构建并部署到 Cloudflare Pages 项目 `lilf95catch`。
+
+需要在 GitHub 仓库 Secrets 中配置：
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+PowerShell 设置示例（需要先安装并登录 GitHub CLI）：
+
+```powershell
+gh secret set CLOUDFLARE_ACCOUNT_ID -b "YOUR_ACCOUNT_ID"
+gh secret set CLOUDFLARE_API_TOKEN -b "YOUR_API_TOKEN"
+```
+
+Cloudflare API Token 需要 Pages Edit 权限；生成入口：
+https://dash.cloudflare.com/profile/api-tokens
+
+自定义域名：在 Cloudflare Pages 项目 `lilf95catch` 中绑定 `LiL.shatranj.space`。如果 `shatranj.space` 的 DNS 也在 Cloudflare，Pages 会自动补 DNS 记录。
+
 ---
 
 ## Viewer 功能概览
 
 ### 1. 线程列表页（`/`）
 
-- 自动扫描 `data/threads/` 下所有线程 ID。  
+- 从 `/datasets/manifest.json` 读取线程列表。  
 - 每一项显示：
   - 线程标题（来自 `meta.json` 的 `title`）或 `Thread {id}`。  
   - 一个页数标记（`pages: last_page_known`），如果有的话。  
@@ -206,7 +247,12 @@ Viewer 会读取上述 `data/threads/{thread_id}` 中的数据，在浏览器中
 - 页面顶部显示：
   - 线程标题、ID、最后已知页数 (`last_page_known`)、最后检查时间 (`last_checked_at`)。
 
-- 过滤与分页控件（页面顶部）：
+- Viewer 强制使用浏览器缓存：
+  - 未安装缓存时，线程页只显示状态与“安装数据”，不能检索或打开帖子。
+  - 已安装缓存且版本匹配时，帖子元数据、正文 chunk、搜索索引都只从 Cache API 读取。
+  - 数据包更新后，“安装数据/更新缓存”会按文件 hash 复用旧缓存中未变化的 chunk，只下载缺失或变化的文件。
+
+- 过滤、排序与分页控件（页面顶部，浏览器 Web Worker 本地执行）：
   - 按作者名包含过滤（`Author (name contains)`）。  
   - 按作者 ID 精确过滤（`Author ID`）。  
   - 按正文关键字过滤（`Text contains`，匹配 `content_text_full`）。  
@@ -214,7 +260,8 @@ Viewer 会读取上述 `data/threads/{thread_id}` 中的数据，在浏览器中
   - 最小点赞/表情数（`Min likes/reactions`）。  
   - 按日期范围过滤（`From date` / `To date`）。  
   - 每页帖子数量（`Page size`，默认 50，最多 200）。  
-  - 点击 “Apply filters” 会应用当前过滤条件并重置页码为 1。
+  - 排序：楼层升序/降序、最新/最早、点赞最多、长文优先、相关度。  
+  - 点击“查看结果”会应用当前过滤条件并重置页码为 1。
 
 - 分页信息：
   - 显示当前页 / 总页数 / 当前过滤下的总帖子数。  
@@ -241,7 +288,7 @@ Viewer 会读取上述 `data/threads/{thread_id}` 中的数据，在浏览器中
 
 后续可选改进（见 `PLAN.md`）：
 
-- 图片缓存：当前已支持图片附件的本地下载并在 Viewer 中展示，后续可以考虑做去重、失败重试策略与更好的错误提示。  
+- 图片缓存：Cloudflare 静态版暂不打包本地图片，正文里的远程图片 URL 由浏览器直接加载。  
 - 用户信息 JSON：当前已维护全局 `users/users.json`，后续可以在 Viewer 中展示更多用户元信息（加入时间、历史用户名等）并加入基于用户组的过滤。  
 - HTML 展示：当前已提供纯文本/HTML 模式切换，后续可优化剧透展开、引用高亮、内联图片排版等。  
 - 更丰富的 UI：例如楼主/开发者过滤、“只看某人”、本地标注与收藏、导出筛选结果等。

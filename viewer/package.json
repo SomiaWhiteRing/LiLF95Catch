@@ -3,8 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "data:build": "cd .. && python -m crawler.lilf95_crawler.cli build-static-viewer-data --out viewer/public/datasets",
+    "cf:build": "npm run data:build && next build",
     "build": "next build",
-    "start": "next start",
+    "start": "python -m http.server 3000 -d out",
     "lint": "next lint"
   },
   "dependencies": {

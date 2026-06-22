@@ -24,6 +24,7 @@ Thumbs.db
 # Project data and secrets
 images/
 data/users/avatars
+viewer/public/datasets/
 crawler/config/config.json
 
 # Node / Next.js (for viewer, future)

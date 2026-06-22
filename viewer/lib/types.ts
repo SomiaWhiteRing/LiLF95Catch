@@ -25,6 +25,7 @@ export interface Post {
     first_seen_at: string;
     last_checked_at: string;
   } | null;
+  rank?: number;
 }
 
 export interface ThreadMeta {
@@ -61,4 +62,46 @@ export interface UserRecord {
 export interface UsersFile {
   schema_version: number;
   users: Record<string, UserRecord>;
+}
+
+export interface StaticPostMeta {
+  thread_id: number;
+  post_id: number;
+  post_index: number;
+  author_id: number;
+  author_name: string;
+  created_at: string;
+  likes_count: number;
+  content_length: number;
+  body_path: string;
+}
+
+export interface StaticPostBody {
+  post_id: number;
+  content_html_raw: string;
+  content_text_full: string;
+  spoilers: Post["spoilers"];
+  attachments: Post["attachments"];
+}
+
+export interface StaticThreadEntry {
+  thread_id: number;
+  title: string;
+  total_posts: number;
+  min_post_index: number | null;
+  max_post_index: number | null;
+  meta: string;
+  posts_meta: string[];
+  bodies: string[];
+  search_buckets: Record<string, string[]>;
+}
+
+export interface StaticManifest {
+  schema_version: number;
+  version: string;
+  generated_at: string;
+  total_posts: number;
+  max_file_size_bytes: number;
+  threads: StaticThreadEntry[];
+  files?: Record<string, string>;
 }
