@@ -85,18 +85,30 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
           $headers = @{ Authorization = "Bearer $env:CLOUDFLARE_API_TOKEN"; "Content-Type" = "application/json" }
+          Write-Host "CLOUDFLARE_ZONE_ID configured: $([bool]$env:CLOUDFLARE_ZONE_ID)"
           $zoneId = $env:CLOUDFLARE_ZONE_ID
-          if (-not $zoneId) {
-            $zoneId = ((Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1).id
+          try {
+            if (-not $zoneId) {
+              $zoneId = ((Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1).id
+            }
+            if (-not $zoneId) {
+              throw "Cloudflare zone shatranj.space not found. Set CLOUDFLARE_ZONE_ID or add CNAME LiLcatch -> lilf95catch.pages.dev manually."
+            }
+            $recordsUri = "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
+            $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=LiLcatch.shatranj.space&type=CNAME").result | Select-Object -First 1
+            $body = @{ type = "CNAME"; name = "LiLcatch"; content = "lilf95catch.pages.dev"; proxied = $true; ttl = 1 } | ConvertTo-Json
+            if ($record) {
+              Invoke-RestMethod -Method Put -Headers $headers -Uri "$recordsUri/$($record.id)" -Body $body | Out-Null
+            } else {
+              Invoke-RestMethod -Method Post -Headers $headers -Uri $recordsUri -Body $body | Out-Null
+            }
           }
-          if (-not $zoneId) {
-            throw "Cloudflare zone shatranj.space not found. Set CLOUDFLARE_ZONE_ID or add CNAME LiLcatch -> lilf95catch.pages.dev manually."
-          }
-          $recordsUri = "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
-          $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=LiLcatch.shatranj.space&type=CNAME").result | Select-Object -First 1
-          $body = @{ type = "CNAME"; name = "LiLcatch"; content = "lilf95catch.pages.dev"; proxied = $true; ttl = 1 } | ConvertTo-Json
-          if ($record) {
-            Invoke-RestMethod -Method Put -Headers $headers -Uri "$recordsUri/$($record.id)" -Body $body | Out-Null
-          } else {
-            Invoke-RestMethod -Method Post -Headers $headers -Uri $recordsUri -Body $body | Out-Null
+          catch {
+            $message = $_.Exception.Message
+            if ($_.Exception.Response) {
+              $bodyReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+              $message = $bodyReader.ReadToEnd()
+            }
+            Write-Output "::error title=Cloudflare DNS::$message"
+            throw
           }
