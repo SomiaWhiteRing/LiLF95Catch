@@ -43,6 +43,14 @@ jobs:
         working-directory: viewer
         run: npm run cf:build
 
+      - name: Ensure Cloudflare Pages project
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create lilf95catch --production-branch master
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
