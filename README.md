@@ -230,6 +230,14 @@ https://dash.cloudflare.com/profile/api-tokens
 
 自定义域名：在 Cloudflare Pages 项目 `lilf95catch` 中绑定 `LiL.shatranj.space`。如果 `shatranj.space` 的 DNS 也在 Cloudflare，Pages 会自动补 DNS 记录。
 
+本地一键创建项目、部署并绑定域名：
+
+```powershell
+.\scripts\deploy-cloudflare.ps1 `
+  -AccountId "YOUR_ACCOUNT_ID" `
+  -ApiToken "YOUR_API_TOKEN"
+```
+
 ---
 
 ## Viewer 功能概览
