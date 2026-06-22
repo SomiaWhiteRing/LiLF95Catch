@@ -38,7 +38,7 @@ try {
   }
   if (-not $ZoneId) { throw "Cloudflare zone shatranj.space not found" }
   $recordsUri = "https://api.cloudflare.com/client/v4/zones/$ZoneId/dns_records"
-  $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=$Domain&type=CNAME").result | Select-Object -First 1
+  $record = (Invoke-RestMethod -Headers $headers -Uri "${recordsUri}?name=$Domain&type=CNAME").result | Select-Object -First 1
   $dnsBody = @{
     type = "CNAME"
     name = ($Domain -replace "\.shatranj\.space$", "")
@@ -47,7 +47,7 @@ try {
     ttl = 1
   } | ConvertTo-Json
   if ($record) {
-    Invoke-RestMethod -Method Put -Headers $headers -Uri "$recordsUri/$($record.id)" -Body $dnsBody | Out-Null
+    Invoke-RestMethod -Method Put -Headers $headers -Uri "${recordsUri}/$($record.id)" -Body $dnsBody | Out-Null
   } else {
     Invoke-RestMethod -Method Post -Headers $headers -Uri $recordsUri -Body $dnsBody | Out-Null
   }

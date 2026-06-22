@@ -95,10 +95,10 @@ jobs:
               throw "Cloudflare zone shatranj.space not found. Set CLOUDFLARE_ZONE_ID or add CNAME LiLcatch -> lilf95catch.pages.dev manually."
             }
             $recordsUri = "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
-            $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=LiLcatch.shatranj.space&type=CNAME").result | Select-Object -First 1
+            $record = (Invoke-RestMethod -Headers $headers -Uri "${recordsUri}?name=LiLcatch.shatranj.space&type=CNAME").result | Select-Object -First 1
             $body = @{ type = "CNAME"; name = "LiLcatch"; content = "lilf95catch.pages.dev"; proxied = $true; ttl = 1 } | ConvertTo-Json
             if ($record) {
-              Invoke-RestMethod -Method Put -Headers $headers -Uri "$recordsUri/$($record.id)" -Body $body | Out-Null
+              Invoke-RestMethod -Method Put -Headers $headers -Uri "${recordsUri}/$($record.id)" -Body $body | Out-Null
             } else {
               Invoke-RestMethod -Method Post -Headers $headers -Uri $recordsUri -Body $body | Out-Null
             }
