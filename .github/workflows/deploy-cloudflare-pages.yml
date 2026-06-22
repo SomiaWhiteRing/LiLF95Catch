@@ -74,6 +74,6 @@ jobs:
           $headers = @{ Authorization = "Bearer $env:CLOUDFLARE_API_TOKEN"; "Content-Type" = "application/json" }
           $uri = "https://api.cloudflare.com/client/v4/accounts/$env:CLOUDFLARE_ACCOUNT_ID/pages/projects/lilf95catch/domains"
           $domains = (Invoke-RestMethod -Headers $headers -Uri $uri).result
-          if (-not ($domains | Where-Object { $_.name -ieq "LiL.shatranj.space" })) {
-            Invoke-RestMethod -Method Post -Headers $headers -Uri $uri -Body (@{ name = "LiL.shatranj.space" } | ConvertTo-Json) | Out-Null
+          if (-not ($domains | Where-Object { $_.name -ieq "LiLcatch.shatranj.space" })) {
+            Invoke-RestMethod -Method Post -Headers $headers -Uri $uri -Body (@{ name = "LiLcatch.shatranj.space" } | ConvertTo-Json) | Out-Null
           }

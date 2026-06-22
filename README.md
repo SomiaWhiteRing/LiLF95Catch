@@ -225,10 +225,10 @@ gh secret set CLOUDFLARE_ACCOUNT_ID -b "YOUR_ACCOUNT_ID"
 gh secret set CLOUDFLARE_API_TOKEN -b "YOUR_API_TOKEN"
 ```
 
-Cloudflare API Token 需要 Pages Edit 权限；生成入口：
-https://dash.cloudflare.com/profile/api-tokens
+Cloudflare API Token 需要 `Pages:Edit`，如果要自动绑定 `LiLcatch.shatranj.space`，还需要 `DNS:Edit` 和 `Zone:Read`：
+https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22page%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=LiLF95Catch%20Cloudflare%20Pages%20Deploy
 
-自定义域名：在 Cloudflare Pages 项目 `lilf95catch` 中绑定 `LiL.shatranj.space`。如果 `shatranj.space` 的 DNS 也在 Cloudflare，Pages 会自动补 DNS 记录。
+自定义域名：在 Cloudflare Pages 项目 `lilf95catch` 中绑定 `LiLcatch.shatranj.space`。如果 `shatranj.space` 的 DNS 也在 Cloudflare，Pages 会自动补 DNS 记录。
 
 本地一键创建项目、部署并绑定域名：
 
@@ -236,6 +236,14 @@ https://dash.cloudflare.com/profile/api-tokens
 .\scripts\deploy-cloudflare.ps1 `
   -AccountId "YOUR_ACCOUNT_ID" `
   -ApiToken "YOUR_API_TOKEN"
+```
+
+如果没有 GitHub CLI，可以在 GitHub 仓库 `Settings -> Secrets and variables -> Actions` 手动添加同名 Secrets；或者先在当前 PowerShell 里设置环境变量：
+
+```powershell
+$env:CLOUDFLARE_ACCOUNT_ID="YOUR_ACCOUNT_ID"
+$env:CLOUDFLARE_API_TOKEN="YOUR_API_TOKEN"
+.\scripts\deploy-cloudflare.ps1 -AccountId $env:CLOUDFLARE_ACCOUNT_ID -ApiToken $env:CLOUDFLARE_API_TOKEN
 ```
 
 ---

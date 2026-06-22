@@ -4,7 +4,7 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$ApiToken,
   [string]$ProjectName = "lilf95catch",
-  [string]$Domain = "LiL.shatranj.space"
+  [string]$Domain = "LiLcatch.shatranj.space"
 )
 
 $ErrorActionPreference = "Stop"
