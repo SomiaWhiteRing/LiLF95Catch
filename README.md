@@ -230,6 +230,15 @@ https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%
 
 自定义域名：在 Cloudflare Pages 项目 `lilf95catch` 中绑定 `LiLcatch.shatranj.space`。如果 `shatranj.space` 的 DNS 也在 Cloudflare，Pages 会自动补 DNS 记录。
 
+如果 DNS 没有自动出现，在 Cloudflare DNS 手动添加：
+
+```text
+Type: CNAME
+Name: LiLcatch
+Target: lilf95catch.pages.dev
+Proxy: On
+```
+
 本地一键创建项目、部署并绑定域名：
 
 ```powershell
