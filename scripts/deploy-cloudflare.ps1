@@ -31,6 +31,23 @@ try {
   } catch {
     if ($_.Exception.Response.StatusCode.value__ -ne 409) { throw }
   }
+
+  $zone = (Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1
+  if (-not $zone) { throw "Cloudflare zone shatranj.space not found" }
+  $recordsUri = "https://api.cloudflare.com/client/v4/zones/$($zone.id)/dns_records"
+  $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=$Domain&type=CNAME").result | Select-Object -First 1
+  $dnsBody = @{
+    type = "CNAME"
+    name = ($Domain -replace "\.shatranj\.space$", "")
+    content = "$ProjectName.pages.dev"
+    proxied = $true
+    ttl = 1
+  } | ConvertTo-Json
+  if ($record) {
+    Invoke-RestMethod -Method Put -Headers $headers -Uri "$recordsUri/$($record.id)" -Body $dnsBody | Out-Null
+  } else {
+    Invoke-RestMethod -Method Post -Headers $headers -Uri $recordsUri -Body $dnsBody | Out-Null
+  }
 } finally {
   Pop-Location
 }
