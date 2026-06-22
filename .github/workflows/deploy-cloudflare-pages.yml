@@ -80,7 +80,6 @@ jobs:
 
       - name: Ensure DNS record
         shell: pwsh
-        continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
@@ -91,8 +90,7 @@ jobs:
             $zoneId = ((Invoke-RestMethod -Headers $headers -Uri "https://api.cloudflare.com/client/v4/zones?name=shatranj.space").result | Select-Object -First 1).id
           }
           if (-not $zoneId) {
-            Write-Warning "Cloudflare zone shatranj.space not found. Add CNAME LiLcatch -> lilf95catch.pages.dev manually."
-            exit 0
+            throw "Cloudflare zone shatranj.space not found. Set CLOUDFLARE_ZONE_ID or add CNAME LiLcatch -> lilf95catch.pages.dev manually."
           }
           $recordsUri = "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
           $record = (Invoke-RestMethod -Headers $headers -Uri "$recordsUri?name=LiLcatch.shatranj.space&type=CNAME").result | Select-Object -First 1
