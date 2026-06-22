@@ -39,9 +39,12 @@ jobs:
         working-directory: viewer
         run: npm ci
 
+      - name: Build static data
+        run: python -m crawler.lilf95_crawler.cli build-static-viewer-data --out viewer/public/datasets
+
       - name: Build static viewer
         working-directory: viewer
-        run: npm run cf:build
+        run: npm run build
 
       - name: Ensure Cloudflare Pages project
         uses: cloudflare/wrangler-action@v3
